@@ -1,0 +1,133 @@
+/* Main button styles */
+.stButton > button {
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary button */
+.primary-btn button {
+    background-color: #6E432C !important; /* Dark coffee brown */
+    color: white !important;
+    border: 1px solid #5D331B !important;
+}
+
+.primary-btn button:hover {
+    background-color: #845A40 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Secondary button */
+.secondary-btn button {
+    background-color: #3E474F !important;
+    color: white !important;
+    border: 1px solid #2A3439 !important;
+}
+
+.secondary-btn button:hover {
+    background-color: #4D5A64 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Danger button */
+.danger-btn button {
+    background-color: #B22222 !important;
+    color: white !important;
+    border: 1px solid #8B0000 !important;
+}
+
+.danger-btn button:hover {
+    background-color: #CD5C5C !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Success button */
+.success-btn button {
+    background-color: #2E8B57 !important;
+    color: white !important;
+    border: 1px solid #1D6B41 !important;
+}
+
+.success-btn button:hover {
+    background-color: #3CB371 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Info button */
+.info-btn button {
+    background-color: #1E90FF !important;
+    color: white !important;
+    border: 1px solid #0066CC !important;
+}
+
+.info-btn button:hover {
+    background-color: #4DA6FF !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Warning button */
+.warning-btn button {
+    background-color: #F0A500 !important;
+    color: white !important;
+    border: 1px solid #CC8800 !important;
+}
+
+.warning-btn button:hover {
+    background-color: #FFC045 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Disabled state */
+.stButton > button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Small button */
+.small-btn button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.8rem !important;
+}
+
+/* Large button */
+.large-btn button {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1.2rem !important;
+}
+
+/* Button with icon */
+.icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Pill button */
+.pill-btn button {
+    border-radius: 50px !important;
+}
+
+/* Outline button - override for all colors */
+.outline-btn button {
+    background-color: transparent !important;
+}
+
+.outline-primary-btn button {
+    color: #6E432C !important;
+    border: 2px solid #6E432C !important;
+    background-color: transparent !important;
+}
+
+.outline-primary-btn button:hover {
+    background-color: rgba(110, 67, 44, 0.1) !important;
+}

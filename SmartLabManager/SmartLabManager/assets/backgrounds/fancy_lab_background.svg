@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background pattern -->
+  <defs>
+    <pattern id="lab-grid" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#6E432C" stroke-width="0.5" opacity="0.2"/>
+      <circle cx="0" cy="0" r="2" fill="#6E432C" opacity="0.1" />
+      <circle cx="50" cy="0" r="2" fill="#6E432C" opacity="0.1" />
+      <circle cx="0" cy="50" r="2" fill="#6E432C" opacity="0.1" />
+      <circle cx="50" cy="50" r="2" fill="#6E432C" opacity="0.1" />
+    </pattern>
+    
+    <!-- Science and lab related icons -->
+    <g id="lab-icon-1">
+      <path d="M 0 20 L 5 0 L 15 0 L 20 20 L 15 15 L 5 15 Z" fill="#6E432C" opacity="0.3" />
+    </g>
+    
+    <g id="lab-icon-2">
+      <circle cx="10" cy="10" r="8" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.3" />
+      <circle cx="10" cy="10" r="4" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.3" />
+      <line x1="10" y1="0" x2="10" y2="20" stroke="#6E432C" stroke-width="1" opacity="0.3" />
+      <line x1="0" y1="10" x2="20" y2="10" stroke="#6E432C" stroke-width="1" opacity="0.3" />
+    </g>
+    
+    <g id="lab-icon-3">
+      <rect x="5" y="0" width="10" height="15" fill="#6E432C" opacity="0.2" />
+      <path d="M 0 15 L 20 15 L 15 20 L 5 20 Z" fill="#6E432C" opacity="0.3" />
+    </g>
+  </defs>
+  
+  <!-- Gradient background -->
+  <rect width="100%" height="100%" fill="#262730" />
+  <rect width="100%" height="100%" fill="url(#lab-grid)" />
+  
+  <!-- Scattered lab icons -->
+  <use href="#lab-icon-1" x="100" y="100" />
+  <use href="#lab-icon-1" x="400" y="300" />
+  <use href="#lab-icon-1" x="700" y="200" />
+  
+  <use href="#lab-icon-2" x="200" y="200" />
+  <use href="#lab-icon-2" x="500" y="100" />
+  <use href="#lab-icon-2" x="300" y="500" />
+  
+  <use href="#lab-icon-3" x="150" y="350" />
+  <use href="#lab-icon-3" x="600" y="400" />
+  <use href="#lab-icon-3" x="250" y="50" />
+  
+  <!-- Stylized waves -->
+  <path d="M 0 550 C 200 500, 400 600, 800 550" fill="none" stroke="#6E432C" stroke-width="2" opacity="0.2" />
+  <path d="M 0 560 C 200 510, 400 610, 800 560" fill="none" stroke="#6E432C" stroke-width="2" opacity="0.2" />
+  <path d="M 0 570 C 200 520, 400 620, 800 570" fill="none" stroke="#6E432C" stroke-width="2" opacity="0.2" />
+  
+  <!-- Abstract lab equipment silhouettes -->
+  <path d="M 750 50 L 730 50 L 720 80 L 710 50 L 690 50 L 700 100 L 740 100 Z" fill="#6E432C" opacity="0.2" />
+  <path d="M 50 500 L 70 500 L 90 460 L 90 500 L 110 500 L 110 450 L 50 450 Z" fill="#6E432C" opacity="0.2" />
+  
+  <!-- Light beams -->
+  <path d="M 400 0 L 380 600" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.05" />
+  <path d="M 410 0 L 390 600" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.05" />
+  <path d="M 420 0 L 400 600" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.05" />
+  <path d="M 390 0 L 370 600" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.05" />
+  <path d="M 380 0 L 360 600" fill="none" stroke="#6E432C" stroke-width="1" opacity="0.05" />
+</svg>
