@@ -21,7 +21,7 @@ public class JavaGateway {
     public TimeUtils getTimeUtils() {
         return timeUtils;
     }
-    
+    //this is the gate way to connect thye python files to the java files
     public BookingManager getBookingManager() {
         return bookingManager;
     }
