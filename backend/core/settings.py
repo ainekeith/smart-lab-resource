@@ -27,6 +27,14 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',  # Required for django-allauth
 ]
 
+# Database Configuration
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
