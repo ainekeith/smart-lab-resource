@@ -2,14 +2,15 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.utils.dateparse import parse_datetime
 from django_filters import rest_framework as filters
 from .models import Booking
 from .serializers import BookingSerializer
 from apps.accounts.permissions import IsAdmin, IsStaff, IsOwnerOrStaff
 
 class BookingFilter(filters.FilterSet):
-    start_date = filters.DateFilter(field_name='start_time', lookup_expr='date__gte')
-    end_date = filters.DateFilter(field_name='end_time', lookup_expr='date__lte')
+    start_date = filters.DateTimeFilter(field_name='start_time', lookup_expr='gte')
+    end_date = filters.DateTimeFilter(field_name='end_time', lookup_expr='lte')
     
     class Meta:
         model = Booking

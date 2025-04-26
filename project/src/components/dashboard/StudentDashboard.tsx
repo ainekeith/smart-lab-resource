@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -14,8 +14,9 @@ import {
   CircularProgress,
   Paper,
   useTheme,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+  Alert,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarClock,
   CheckCircle,
@@ -23,63 +24,94 @@ import {
   BookOpen,
   AlertCircle,
   ArrowUpRight,
-} from 'lucide-react';
-import DashboardCard from './DashboardCard';
-import bookingService from '../../services/booking.service';
-import { Booking } from '../../types';
-import { format } from 'date-fns';
+} from "lucide-react";
+import { addDays } from "date-fns";
+import DashboardCard from "./DashboardCard";
+import bookingService from "../../services/booking.service";
+import { Booking } from "../../types";
+import { format } from "date-fns";
 
 const StudentDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
-  
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
+
         // Fetch all bookings for the student
         const bookingsResponse = await bookingService.getAll();
-        setBookings(bookingsResponse.data);
-        
-        // Fetch upcoming bookings
-        const now = new Date().toISOString();
+        setBookings(bookingsResponse.results || []);
+
+        // Fetch upcoming bookings with proper date range
+        const now = new Date();
+        const thirtyDaysFromNow = addDays(now, 30);
+
         const upcomingResponse = await bookingService.getAll({
           start_date: now,
-          status: 'approved',
+          end_date: thirtyDaysFromNow,
+          status: "approved",
         });
-        setUpcomingBookings(upcomingResponse.data);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+
+        setUpcomingBookings(upcomingResponse.results || []);
+      } catch (error: any) {
+        const errorMessage =
+          error.response?.data?.detail || "Failed to fetch dashboard data";
+        setError(errorMessage);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
-  
-  if (loading) {
+
+  if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <CircularProgress />
       </Box>
     );
   }
-  
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
   const totalBookings = bookings.length;
-  const approvedBookings = bookings.filter(b => b.status === 'approved').length;
-  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-  const rejectedBookings = bookings.filter(b => b.status === 'rejected').length;
-  
-  const successRate = totalBookings > 0 
-    ? Math.round((approvedBookings / totalBookings) * 100) 
-    : 0;
-  
+  const approvedBookings = bookings.filter(
+    (b) => b.status === "approved"
+  ).length;
+  const pendingBookings = bookings.filter((b) => b.status === "pending").length;
+  const rejectedBookings = bookings.filter(
+    (b) => b.status === "rejected"
+  ).length;
+
+  const successRate =
+    totalBookings > 0
+      ? Math.round((approvedBookings / totalBookings) * 100)
+      : 0;
+
   return (
     <Box>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mb: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Student Dashboard
         </Typography>
@@ -87,12 +119,12 @@ const StudentDashboard = () => {
           variant="contained"
           color="primary"
           startIcon={<CalendarClock size={20} />}
-          onClick={() => navigate('/bookings/create')}
+          onClick={() => navigate("/bookings/new")}
         >
           Book Equipment
         </Button>
       </Box>
-      
+
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <DashboardCard
@@ -128,45 +160,56 @@ const StudentDashboard = () => {
             icon={<CheckCircle size={24} />}
             description="Approved bookings"
             color={theme.palette.success.main}
-            trend={successRate - 50} // Example trend
+            trend={successRate - 50}
           />
         </Grid>
       </Grid>
-      
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  sx={{ fontWeight: 600 }}
+                >
                   Upcoming Bookings
                 </Typography>
                 <Button
                   variant="text"
                   endIcon={<ArrowUpRight size={16} />}
-                  onClick={() => navigate('/bookings')}
+                  onClick={() => navigate("/bookings")}
                 >
                   View All
                 </Button>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              
+
               {upcomingBookings.length === 0 ? (
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 3, 
-                    textAlign: 'center',
-                    bgcolor: 'background.default'
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    textAlign: "center",
+                    bgcolor: "background.default",
                   }}
                 >
                   <Typography variant="body1" color="text.secondary">
                     No upcoming bookings found
                   </Typography>
-                  <Button 
-                    variant="contained" 
+                  <Button
+                    variant="contained"
                     sx={{ mt: 2 }}
-                    onClick={() => navigate('/bookings/create')}
+                    onClick={() => navigate("/bookings/new")}
                   >
                     Book Now
                   </Button>
@@ -179,8 +222,8 @@ const StudentDashboard = () => {
                       sx={{
                         borderRadius: 1,
                         mb: 1,
-                        '&:hover': {
-                          bgcolor: 'background.default',
+                        "&:hover": {
+                          bgcolor: "background.default",
                         },
                       }}
                       secondaryAction={
@@ -188,9 +231,13 @@ const StudentDashboard = () => {
                           label={booking.status}
                           size="small"
                           color={
-                            booking.status === 'approved' ? 'success' :
-                            booking.status === 'pending' ? 'warning' :
-                            booking.status === 'rejected' ? 'error' : 'default'
+                            booking.status === "approved"
+                              ? "success"
+                              : booking.status === "pending"
+                              ? "warning"
+                              : booking.status === "rejected"
+                              ? "error"
+                              : "default"
                           }
                         />
                       }
@@ -199,11 +246,21 @@ const StudentDashboard = () => {
                         primary={booking.equipment.name}
                         secondary={
                           <>
-                            <Typography component="span" variant="body2" color="text.primary">
-                              {format(new Date(booking.start_time), 'MMM dd, yyyy')}
+                            <Typography
+                              component="span"
+                              variant="body2"
+                              color="text.primary"
+                            >
+                              {format(
+                                new Date(booking.start_time),
+                                "MMM dd, yyyy"
+                              )}
                             </Typography>
-                            {' — '}
-                            {format(new Date(booking.start_time), 'h:mm a')} - {format(new Date(booking.end_time), 'h:mm a')}
+                            {" — "}
+                            {format(
+                              new Date(booking.start_time),
+                              "h:mm a"
+                            )} - {format(new Date(booking.end_time), "h:mm a")}
                           </>
                         }
                       />
@@ -214,39 +271,51 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  sx={{ fontWeight: 600 }}
+                >
                   Available Equipment
                 </Typography>
                 <Button
                   variant="text"
                   endIcon={<ArrowUpRight size={16} />}
-                  onClick={() => navigate('/equipment')}
+                  onClick={() => navigate("/equipment")}
                 >
                   Browse
                 </Button>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              
+
               <Paper
                 elevation={0}
                 sx={{
                   p: 3,
-                  textAlign: 'center',
-                  bgcolor: 'background.default',
+                  textAlign: "center",
+                  bgcolor: "background.default",
                   borderRadius: 1,
                 }}
               >
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  Discover and book lab equipment for your experiments and projects.
+                  Discover and book lab equipment for your experiments and
+                  projects.
                 </Typography>
                 <Button
                   variant="contained"
-                  onClick={() => navigate('/equipment')}
+                  onClick={() => navigate("/equipment")}
                 >
                   Browse Equipment
                 </Button>
