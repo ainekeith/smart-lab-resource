@@ -16,12 +16,12 @@ DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.131']
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOW_ALL_ORIGINS = False  # More secure in production
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://192.168.1.131:3000",
+    "http://192.168.1.131:3000"
 ]
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -42,6 +42,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
@@ -49,6 +50,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://192.168.1.131:3000",
 ]
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access to CSRF cookie
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 # Site ID
 SITE_ID = 1
@@ -63,6 +68,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Required for django-allauth
+]
+
+MIDDLEWARE += [
+    'core.middleware.ErrorHandlingMiddleware',
 ]
 
 # Database Configuration
@@ -111,6 +120,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+    'django_cleanup.apps.CleanupConfig',  # Add this at the end of INSTALLED_APPS
     
     # Local apps
     'apps.accounts',
@@ -138,28 +148,39 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # REST Framework settings
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_FILTER_BACKENDS': (
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
-    ),
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
+
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = 'auth'
+JWT_AUTH_REFRESH_COOKIE = 'refresh-token'
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'auth',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh-token',
+    'JWT_AUTH_HTTPONLY': False,
+    'SESSION_LOGIN': False,  # Disable session-based login
 }
 
 # JWT settings
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     
@@ -236,4 +257,21 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.reports.tasks.generate_weekly_report',
         'schedule': crontab(day_of_week='monday', hour=2, minute=0),  # Run every Monday at 2 AM
     },
-} 
+}
+
+# Equipment specific settings
+EQUIPMENT_SETTINGS = {
+    'MAX_IMAGE_SIZE': 5 * 1024 * 1024,  # 5MB
+    'ALLOWED_IMAGE_TYPES': ['image/jpeg', 'image/png', 'image/gif'],
+    'MAX_MANUAL_FILE_SIZE': 10 * 1024 * 1024,  # 10MB
+    'ALLOWED_MANUAL_TYPES': ['application/pdf', 'application/msword', 
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    'MAINTENANCE_REMINDER_DAYS': 7,  # Days before scheduled maintenance to send reminder
+}
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
+# File Storage
+DEFAULT_FILE_STORAGE = 'core.storage.OverwriteStorage'

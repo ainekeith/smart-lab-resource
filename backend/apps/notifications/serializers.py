@@ -6,14 +6,17 @@ from apps.accounts.serializers import UserSerializer
 User = get_user_model()
 
 class NotificationSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source='user',
-        write_only=True
-    )
-
     class Meta:
         model = Notification
         fields = '__all__'
-        read_only_fields = ('created_at',) 
+        read_only_fields = ('user', 'created_at', 'updated_at')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.related_object:
+            data['related_object'] = {
+                'type': instance.content_type.model,
+                'id': instance.object_id,
+                'str': str(instance.related_object)
+            }
+        return data

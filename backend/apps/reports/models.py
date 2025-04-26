@@ -1,24 +1,30 @@
 from django.db import models
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+from django.conf import settings
 
 class Report(models.Model):
     REPORT_TYPES = (
-        ('daily', 'Daily Report'),
-        ('weekly', 'Weekly Report'),
-        ('inventory', 'Inventory Report'),
-        ('equipment', 'Equipment Report'),
-        ('booking', 'Booking Report'),
+        ('equipment_usage', 'Equipment Usage'),
+        ('maintenance', 'Maintenance Report'),
+        ('inventory', 'Inventory Status'),
+        ('booking_analytics', 'Booking Analytics'),
+        ('user_activity', 'User Activity'),
     )
 
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=255)
     report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
-    content = models.JSONField()
-    generated_at = models.DateTimeField(auto_now_add=True)
-    generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    description = models.TextField(blank=True)
+    parameters = models.JSONField(default=dict)  # Store report parameters
+    generated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    file = models.FileField(upload_to='reports/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.get_report_type_display()} - {self.generated_at.date()}" 
+        return f"{self.title} - {self.report_type}"

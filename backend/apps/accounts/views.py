@@ -1,7 +1,8 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -10,8 +11,11 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserUpdateSerializer,
-    ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+    ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    RegisterSerializer
 )
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -103,3 +107,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({"uidb64": ["Invalid user ID."]}, 
                                status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer

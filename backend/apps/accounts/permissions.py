@@ -12,11 +12,8 @@ class IsOwnerOrAdmin(permissions.BasePermission):
     Custom permission to only allow owners of an object or admin users to access it.
     """
     def has_object_permission(self, request, view, obj):
-        # Admin permissions
-        if request.user.is_staff:
+        if request.user.user_type == 'admin':
             return True
-        
-        # Instance must have an attribute named `user`
         return hasattr(obj, 'user') and obj.user == request.user
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -55,4 +52,34 @@ class IsStaffOrOwner(permissions.BasePermission):
             return True
         
         # Instance must have an attribute named `user`
-        return hasattr(obj, 'user') and obj.user == request.user 
+        return hasattr(obj, 'user') and obj.user == request.user
+
+class IsAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow admin users to access the view.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.user_type == 'admin'
+
+class IsStaff(permissions.BasePermission):
+    """
+    Custom permission to only allow staff users to access the view.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.user_type == 'staff'
+
+class IsStudent(permissions.BasePermission):
+    """
+    Custom permission to only allow student users to access the view.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.user_type == 'student'
+
+class IsOwnerOrStaff(permissions.BasePermission):
+    """
+    Custom permission to only allow owners or staff members to access objects.
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.user.user_type in ['admin', 'staff']:
+            return True
+        return hasattr(obj, 'user') and obj.user == request.user
