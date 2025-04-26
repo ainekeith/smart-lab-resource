@@ -8,16 +8,21 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class InventoryItem(models.Model):
-    CATEGORY_CHOICES = (
-        ('consumable', 'Consumable'),
-        ('component', 'Component'),
-        ('tool', 'Tool'),
-        ('spare_part', 'Spare Part'),
-    )
+    CATEGORY_CHOICES = [
+        ('CHEMICALS', 'Chemicals'),
+        ('GLASSWARE', 'Glassware'),
+        ('EQUIPMENT', 'Equipment'),
+        ('CONSUMABLES', 'Consumables'),
+        ('OTHER', 'Other'),
+    ]
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    category = models.CharField(
+        max_length=20, 
+        choices=CATEGORY_CHOICES,
+        default='OTHER'
+    )
     sku = models.CharField(max_length=50, unique=True)
     unit = models.CharField(max_length=50)  # e.g., pieces, liters, kg
     quantity = models.IntegerField(default=0, validators=[MinValueValidator(0)])
