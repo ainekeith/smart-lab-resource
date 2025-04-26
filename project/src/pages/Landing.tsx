@@ -25,6 +25,7 @@ import {
 import { motion } from "framer-motion";
 import logo from "../assets/logo.jpg";
 import { Helmet, HelmetProvider } from "react-helmet-async";
+import sorotiCampus from "../assets/soroti.jpg";
 
 const FeatureCard = ({
   icon,
@@ -387,7 +388,7 @@ const Landing = () => {
                 >
                   <Box
                     component="img"
-                    src="https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg"
+                    src={sorotiCampus}
                     alt="Soroti University Campus"
                     sx={{
                       width: "100%",
