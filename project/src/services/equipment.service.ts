@@ -5,7 +5,6 @@ class EquipmentService {
   async getAll(filters?: any): Promise<PaginatedResponse<Equipment>> {
     try {
       const response = await api.get<PaginatedResponse<Equipment>>('/equipment/', { params: filters });
-      console.log('Equipment response:', response.data); // Keep for debugging
       return response.data;
     } catch (error) {
       console.error('Error fetching equipment:', error);
@@ -66,8 +65,8 @@ class EquipmentService {
   ): Promise<MaintenanceRecord> {
     try {
       const response = await api.post<MaintenanceRecord>(
-        `/equipment/${equipmentId}/maintenance/`,
-        data
+        '/maintenance-records/',
+        { ...data, equipment: equipmentId }
       );
       return response.data;
     } catch (error) {
@@ -78,8 +77,9 @@ class EquipmentService {
 
   async getMaintenanceRecords(equipmentId: number): Promise<MaintenanceRecord[]> {
     try {
-      const response = await api.get<{ results: MaintenanceRecord[] }>(
-        `/equipment/${equipmentId}/maintenance/`
+      const response = await api.get<PaginatedResponse<MaintenanceRecord>>(
+        '/maintenance-records/',
+        { params: { equipment: equipmentId } }
       );
       return response.data.results;
     } catch (error) {

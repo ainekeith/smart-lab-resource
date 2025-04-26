@@ -13,6 +13,7 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  FormHelperText,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -23,6 +24,8 @@ import * as Yup from 'yup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import equipmentService from '../../services/equipment.service';
+import { withAccessControl } from '../../components/common/withAccessControl';
+import api from '../../services/api';
 
 const validationSchema = Yup.object({
   maintenance_type: Yup.string().required('Maintenance type is required'),
@@ -32,8 +35,8 @@ const validationSchema = Yup.object({
     Yup.ref('maintenance_date'),
     'Next maintenance date must be after maintenance date'
   ),
-  cost: Yup.number().min(0, 'Cost must be positive'),
-  performed_by: Yup.string().required('Performed by is required'),
+  cost: Yup.string().required('Cost is required'),
+  performed_by: Yup.number().required('Performed by is required'),
 });
 
 const MaintenanceForm = () => {
@@ -47,8 +50,24 @@ const MaintenanceForm = () => {
     queryFn: () => equipmentService.getById(Number(id)),
   });
 
+  // Fetch staff users
+  const { data: users, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users', { type: 'staff' }],
+    queryFn: () => api.get('/users/', { params: { user_type: 'staff' } }).then(res => res.data),
+  });
+
   const mutation = useMutation({
-    mutationFn: (values: any) => equipmentService.addMaintenanceRecord(Number(id), values),
+    mutationFn: (values: any) => {
+      const payload = {
+        ...values,
+        equipment: Number(id),
+        maintenance_date: values.maintenance_date.toISOString().split('T')[0],
+        next_maintenance_date: values.next_maintenance_date 
+          ? values.next_maintenance_date.toISOString().split('T')[0]
+          : null,
+      };
+      return api.post('/maintenance-records/', payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['equipment', id] });
       queryClient.invalidateQueries({ queryKey: ['maintenance', id] });
@@ -65,7 +84,7 @@ const MaintenanceForm = () => {
 
   const formik = useFormik({
     initialValues: {
-      maintenance_type: '',
+      maintenance_type: 'routine',
       description: '',
       maintenance_date: new Date(),
       next_maintenance_date: null,
@@ -78,7 +97,7 @@ const MaintenanceForm = () => {
     },
   });
 
-  if (isLoadingEquipment) {
+  if (isLoadingEquipment || isLoadingUsers) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
@@ -138,15 +157,24 @@ const MaintenanceForm = () => {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  name="performed_by"
-                  label="Performed By"
-                  value={formik.values.performed_by}
-                  onChange={formik.handleChange}
-                  error={formik.touched.performed_by && Boolean(formik.errors.performed_by)}
-                  helperText={formik.touched.performed_by && formik.errors.performed_by}
-                />
+                <FormControl fullWidth error={formik.touched.performed_by && Boolean(formik.errors.performed_by)}>
+                  <InputLabel>Performed By</InputLabel>
+                  <Select
+                    name="performed_by"
+                    value={formik.values.performed_by}
+                    onChange={formik.handleChange}
+                    label="Performed By"
+                  >
+                    {users?.results?.map((user: any) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        {user.first_name} {user.last_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {formik.touched.performed_by && formik.errors.performed_by && (
+                    <FormHelperText>{formik.errors.performed_by}</FormHelperText>
+                  )}
+                </FormControl>
               </Grid>
 
               <Grid item xs={12}>
@@ -198,14 +226,10 @@ const MaintenanceForm = () => {
                   fullWidth
                   name="cost"
                   label="Cost"
-                  type="number"
                   value={formik.values.cost}
                   onChange={formik.handleChange}
                   error={formik.touched.cost && Boolean(formik.errors.cost)}
                   helperText={formik.touched.cost && formik.errors.cost}
-                  InputProps={{
-                    startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-                  }}
                 />
               </Grid>
 
@@ -235,4 +259,6 @@ const MaintenanceForm = () => {
   );
 };
 
-export default MaintenanceForm;
+export default withAccessControl(MaintenanceForm, {
+  requiredRoles: ['admin', 'staff'],
+});

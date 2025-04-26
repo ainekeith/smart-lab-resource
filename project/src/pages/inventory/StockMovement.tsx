@@ -20,6 +20,7 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Grid,
 } from '@mui/material';
 import { ArrowLeft, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -203,7 +204,7 @@ const StockMovement = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                 <CircularProgress />
               </Box>
-            ) : movements?.length === 0 ? (
+            ) : !movements?.results?.length ? (
               <Alert severity="info">
                 No movement history found
               </Alert>
@@ -221,7 +222,7 @@ const StockMovement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {movements?.map((movement) => (
+                    {movements.results.map((movement) => (
                       <TableRow key={movement.id}>
                         <TableCell>
                           {format(new Date(movement.created_at), 'MMM dd, yyyy HH:mm')}
@@ -239,7 +240,7 @@ const StockMovement = () => {
                         </TableCell>
                         <TableCell>{movement.reference}</TableCell>
                         <TableCell>{movement.notes}</TableCell>
-                        <TableCell>{movement.created_by}</TableCell>
+                        <TableCell>{movement.created_by_name}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

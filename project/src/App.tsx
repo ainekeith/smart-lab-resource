@@ -19,6 +19,8 @@ import BookingList from './pages/bookings/BookingList';
 import BookingForm from './pages/bookings/BookingForm';
 import BookingDetails from './pages/bookings/BookingDetails';
 import InventoryList from './pages/inventory/InventoryList';
+import InventoryForm from './pages/inventory/InventoryForm';
+import InventoryDetails from './pages/inventory/InventoryDetails';
 import StockMovement from './pages/inventory/StockMovement';
 import ReportDashboard from './pages/reports/ReportDashboard';
 import Settings from './pages/settings/Settings';
@@ -167,6 +169,36 @@ function App() {
                   <ProtectedRoute requiredRole="staff">
                     <MainLayout>
                       <InventoryList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/inventory/new" 
+                element={
+                  <ProtectedRoute requiredRole="staff">
+                    <MainLayout>
+                      <InventoryForm />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/inventory/:id" 
+                element={
+                  <ProtectedRoute requiredRole="staff">
+                    <MainLayout>
+                      <InventoryDetails />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/inventory/:id/edit" 
+                element={
+                  <ProtectedRoute requiredRole="staff">
+                    <MainLayout>
+                      <InventoryForm />
                     </MainLayout>
                   </ProtectedRoute>
                 } 

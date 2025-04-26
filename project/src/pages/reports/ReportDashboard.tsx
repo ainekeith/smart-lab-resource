@@ -35,6 +35,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
 import reportService from '../../services/report.service';
 import { withAccessControl } from '../../components/common/withAccessControl';
+import { ReportData } from '../../types';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -45,7 +46,7 @@ const ReportDashboard = () => {
   });
   const [reportType, setReportType] = useState('equipment_usage');
 
-  const { data: reportData, isLoading, error } = useQuery({
+  const { data: reportData, isLoading, error } = useQuery<ReportData>({
     queryKey: ['report', reportType, dateRange],
     queryFn: () => reportService.getEquipmentUsageReport(
       dateRange.startDate.toISOString(),
@@ -71,6 +72,16 @@ const ReportDashboard = () => {
       console.error('Error exporting report:', error);
     }
   };
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Error loading report data. Please try again later.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -137,10 +148,8 @@ const ReportDashboard = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            Error loading report data. Please try again.
-          </Alert>
+        ) : !reportData ? (
+          <Alert severity="info">No data available for the selected period</Alert>
         ) : (
           <Grid container spacing={3}>
             <Grid item xs={12} lg={8}>
@@ -150,7 +159,7 @@ const ReportDashboard = () => {
                 </Typography>
                 <Box sx={{ height: 400 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={reportData?.trends || []}>
+                    <BarChart data={reportData.trends}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
@@ -173,7 +182,7 @@ const ReportDashboard = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={reportData?.distribution || []}
+                        data={reportData.distribution}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
@@ -181,7 +190,7 @@ const ReportDashboard = () => {
                         outerRadius={120}
                         label
                       >
-                        {reportData?.distribution.map((entry: any, index: number) => (
+                        {reportData.distribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -202,7 +211,7 @@ const ReportDashboard = () => {
                   <Grid item xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center', p: 2 }}>
                       <Typography variant="h4" color="primary.main">
-                        {reportData?.metrics?.total_bookings || 0}
+                        {reportData.metrics.total_bookings}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Bookings
@@ -212,7 +221,7 @@ const ReportDashboard = () => {
                   <Grid item xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center', p: 2 }}>
                       <Typography variant="h4" color="success.main">
-                        {reportData?.metrics?.utilization_rate || 0}%
+                        {reportData.metrics.utilization_rate}%
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Utilization Rate
@@ -222,7 +231,7 @@ const ReportDashboard = () => {
                   <Grid item xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center', p: 2 }}>
                       <Typography variant="h4" color="warning.main">
-                        {reportData?.metrics?.avg_duration || 0}h
+                        {reportData.metrics.avg_duration}h
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Average Duration
@@ -232,7 +241,7 @@ const ReportDashboard = () => {
                   <Grid item xs={12} sm={6} md={3}>
                     <Box sx={{ textAlign: 'center', p: 2 }}>
                       <Typography variant="h4" color="error.main">
-                        {reportData?.metrics?.maintenance_count || 0}
+                        {reportData.metrics.maintenance_count}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Maintenance Events

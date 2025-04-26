@@ -157,7 +157,7 @@ const InventoryList = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
-      ) : !data?.items || data.items.length === 0 ? (
+      ) : !data?.results || data.results.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" gutterBottom>
             No inventory items found
@@ -190,7 +190,7 @@ const InventoryList = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.items.map((item) => (
+                {data.results.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -244,10 +244,10 @@ const InventoryList = () => {
             </Table>
           </TableContainer>
 
-          {data.total > filters.pageSize && (
+          {data.count > filters.pageSize && (
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
               <Pagination
-                count={Math.ceil(data.total / filters.pageSize)}
+                count={Math.ceil(data.count / filters.pageSize)}
                 page={filters.page}
                 onChange={handlePageChange}
                 color="primary"
@@ -263,3 +263,4 @@ const InventoryList = () => {
 export default withAccessControl(InventoryList, {
   requiredRoles: ['admin', 'staff'],
 });
+

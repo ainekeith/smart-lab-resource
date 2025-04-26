@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -19,85 +19,67 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
   Alert,
-} from "@mui/material";
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Calendar,
-  Download,
-  PenTool as Tool,
-  AlertTriangle,
-} from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSnackbar } from "notistack";
-import { format } from "date-fns";
-import equipmentService from "../../services/equipment.service";
+  CircularProgress,
+  Stack,
+} from '@mui/material';
+import { ArrowLeft, Edit, Trash2, Calendar, Download, PenTool as Tool, AlertTriangle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { format } from 'date-fns';
+import equipmentService from '../../services/equipment.service';
+import { useAccess } from '../../hooks/useAccess';
 
-const statusColors: Record<
-  string,
-  "success" | "warning" | "error" | "default"
-> = {
-  available: "success",
-  in_use: "warning",
-  maintenance: "error",
-  out_of_service: "default",
+const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
+  available: 'success',
+  in_use: 'warning',
+  maintenance: 'error',
+  out_of_service: 'default',
+};
+
+const maintenanceTypeColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
+  routine: 'success',
+  repair: 'error',
+  inspection: 'warning',
+  calibration: 'info',
 };
 
 const EquipmentDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const equipmentId = id ? parseInt(id) : null;
+  const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { isAdmin, isStaff } = useAccess();
 
-  // Validate ID before making API calls
-  if (!equipmentId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">Invalid equipment ID</Alert>
-      </Box>
-    );
-  }
-
-  const {
-    data: equipment,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["equipment", equipmentId],
-    queryFn: () => equipmentService.getById(equipmentId),
-    enabled: Boolean(equipmentId),
+  const { data: equipment, isLoading, error } = useQuery({
+    queryKey: ['equipment', id],
+    queryFn: () => equipmentService.getById(Number(id)),
   });
 
-  const { data: maintenanceRecords, isLoading: isLoadingMaintenance } =
-    useQuery({
-      queryKey: ["maintenance", equipmentId],
-      queryFn: () => equipmentService.getMaintenanceRecords(equipmentId),
-      enabled: Boolean(equipmentId),
-    });
+  const { data: maintenanceRecords, isLoading: isLoadingMaintenance } = useQuery({
+    queryKey: ['maintenance', id],
+    queryFn: () => equipmentService.getMaintenanceRecords(Number(id)),
+  });
 
   const deleteMutation = useMutation({
-    mutationFn: () => equipmentService.delete(equipmentId),
+    mutationFn: () => equipmentService.delete(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["equipment"] });
-      enqueueSnackbar("Equipment deleted successfully", { variant: "success" });
-      navigate("/equipment");
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      enqueueSnackbar('Equipment deleted successfully', { variant: 'success' });
+      navigate('/equipment');
     },
     onError: (error: any) => {
       enqueueSnackbar(
-        error.response?.data?.detail || "Failed to delete equipment",
-        { variant: "error" }
+        error.response?.data?.detail || 'Failed to delete equipment',
+        { variant: 'error' }
       );
     },
   });
 
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
       </Box>
     );
@@ -122,43 +104,54 @@ const EquipmentDetails = () => {
     setDeleteDialogOpen(false);
   };
 
+  const handleMaintenance = () => {
+    navigate(`/equipment/${id}/maintenance`);
+  };
+
   return (
     <Box>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
           variant="outlined"
           startIcon={<ArrowLeft size={20} />}
-          onClick={() => navigate("/equipment")}
+          onClick={() => navigate('/equipment')}
         >
           Back
         </Button>
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ fontWeight: 600, flexGrow: 1 }}
-        >
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600, flexGrow: 1 }}>
           Equipment Details
         </Typography>
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<Trash2 size={20} />}
-          onClick={handleDelete}
-        >
-          Delete
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Edit size={20} />}
-          onClick={() => navigate(`/equipment/${id}/edit`)}
-        >
-          Edit
-        </Button>
+        {(isAdmin || isStaff) && (
+          <>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<Trash2 size={20} />}
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Edit size={20} />}
+              onClick={() => navigate(`/equipment/${id}/edit`)}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Tool size={20} />}
+              onClick={handleMaintenance}
+            >
+              Add Maintenance
+            </Button>
+          </>
+        )}
         <Button
           variant="contained"
           startIcon={<Calendar size={20} />}
           onClick={() => navigate(`/bookings/new?equipment=${id}`)}
-          disabled={equipment.status !== "available"}
+          disabled={equipment.status !== 'available'}
         >
           Book Equipment
         </Button>
@@ -167,25 +160,20 @@ const EquipmentDetails = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
               <Box
                 component="img"
-                src={
-                  equipment.image_url ||
-                  "https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg"
-                }
+                src={equipment.image_url || 'https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg'}
                 alt={equipment.name}
                 sx={{
                   width: 200,
                   height: 200,
-                  objectFit: "cover",
+                  objectFit: 'cover',
                   borderRadius: 1,
                 }}
               />
               <Box sx={{ flexGrow: 1 }}>
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
-                >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Typography variant="h5" component="h2">
                     {equipment.name}
                   </Typography>
@@ -233,12 +221,28 @@ const EquipmentDetails = () => {
               Maintenance History
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
+            
             {isLoadingMaintenance ? (
-              <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <CircularProgress size={24} />
               </Box>
-            ) : maintenanceRecords && maintenanceRecords.length > 0 ? (
+            ) : !maintenanceRecords || maintenanceRecords.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography color="text.secondary">
+                  No maintenance records found
+                </Typography>
+                {(isAdmin || isStaff) && (
+                  <Button
+                    variant="contained"
+                    startIcon={<Tool size={20} />}
+                    onClick={handleMaintenance}
+                    sx={{ mt: 2 }}
+                  >
+                    Add Maintenance Record
+                  </Button>
+                )}
+              </Box>
+            ) : (
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -247,6 +251,7 @@ const EquipmentDetails = () => {
                       <TableCell>Type</TableCell>
                       <TableCell>Description</TableCell>
                       <TableCell>Performed By</TableCell>
+                      <TableCell>Cost</TableCell>
                       <TableCell>Next Due</TableCell>
                     </TableRow>
                   </TableHead>
@@ -254,52 +259,31 @@ const EquipmentDetails = () => {
                     {maintenanceRecords.map((record) => (
                       <TableRow key={record.id}>
                         <TableCell>
-                          {format(
-                            new Date(record.maintenance_date),
-                            "MMM dd, yyyy"
-                          )}
+                          {format(new Date(record.maintenance_date), 'MMM dd, yyyy')}
                         </TableCell>
                         <TableCell>
                           <Chip
                             label={record.maintenance_type}
                             size="small"
-                            color={
-                              record.maintenance_type === "repair"
-                                ? "error"
-                                : "default"
-                            }
+                            color={maintenanceTypeColors[record.maintenance_type]}
                           />
                         </TableCell>
                         <TableCell>{record.description}</TableCell>
-                        <TableCell>{record.performed_by}</TableCell>
+                        <TableCell>
+                          {record.performed_by_user?.first_name} {record.performed_by_user?.last_name}
+                        </TableCell>
+                        <TableCell>{record.cost}</TableCell>
                         <TableCell>
                           {record.next_maintenance_date
-                            ? format(
-                                new Date(record.next_maintenance_date),
-                                "MMM dd, yyyy"
-                              )
-                            : "-"}
+                            ? format(new Date(record.next_maintenance_date), 'MMM dd, yyyy')
+                            : '-'}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </TableContainer>
-            ) : (
-              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-                No maintenance records found
-              </Typography>
             )}
-
-            <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                variant="outlined"
-                startIcon={<Tool size={20} />}
-                onClick={() => navigate(`/equipment/${id}/maintenance/new`)}
-              >
-                Add Maintenance Record
-              </Button>
-            </Box>
           </Paper>
         </Grid>
 
@@ -309,7 +293,7 @@ const EquipmentDetails = () => {
               Status Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
+            
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 Current Condition
@@ -317,31 +301,29 @@ const EquipmentDetails = () => {
               <Chip
                 label={equipment.condition}
                 size="small"
-                color={
-                  equipment.condition === "excellent" ? "success" : "default"
-                }
+                color={equipment.condition === 'excellent' ? 'success' : 'default'}
                 sx={{ mt: 0.5 }}
               />
             </Box>
-
+            
             {equipment.next_maintenance && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Next Maintenance Due
                 </Typography>
                 <Typography>
-                  {format(new Date(equipment.next_maintenance), "MMM dd, yyyy")}
+                  {format(new Date(equipment.next_maintenance), 'MMM dd, yyyy')}
                 </Typography>
               </Box>
             )}
-
+            
             {equipment.last_maintained && (
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
                   Last Maintained
                 </Typography>
                 <Typography>
-                  {format(new Date(equipment.last_maintained), "MMM dd, yyyy")}
+                  {format(new Date(equipment.last_maintained), 'MMM dd, yyyy')}
                 </Typography>
               </Box>
             )}
@@ -352,13 +334,13 @@ const EquipmentDetails = () => {
               Documentation
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
+            
             {equipment.manual_url ? (
               <Button
                 fullWidth
                 variant="outlined"
                 startIcon={<Download size={20} />}
-                onClick={() => window.open(equipment.manual_url, "_blank")}
+                onClick={() => window.open(equipment.manual_url, '_blank')}
                 sx={{ mb: 2 }}
               >
                 Download Manual
@@ -382,8 +364,7 @@ const EquipmentDetails = () => {
       >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this equipment? This action cannot be
-          undone.
+          Are you sure you want to delete this equipment? This action cannot be undone.
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
@@ -392,7 +373,7 @@ const EquipmentDetails = () => {
             onClick={confirmDelete}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

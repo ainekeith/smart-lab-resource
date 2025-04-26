@@ -15,6 +15,7 @@ import {
   CircularProgress,
   Paper,
   useTheme,
+  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -32,7 +33,7 @@ import equipmentService from '../../services/equipment.service';
 import inventoryService from '../../services/inventory.service';
 import { Booking, Equipment, InventoryItem } from '../../types';
 import { format } from 'date-fns';
-import { withAccessControl } from '../common/withAccessControl';
+import { withAccessControl } from '../../components/common/withAccessControl';
 
 const StaffDashboard = () => {
   const theme = useTheme();
@@ -55,11 +56,11 @@ const StaffDashboard = () => {
         
         // Fetch equipment under maintenance
         const equipmentResponse = await equipmentService.getAll({ status: 'maintenance' });
-        setMaintenanceEquipment(equipmentResponse.items || []);
+        setMaintenanceEquipment(equipmentResponse.results || []);
         
         // Fetch low stock inventory items
-        const inventoryResponse = await inventoryService.getLowStockItems();
-        setLowStockItems(inventoryResponse || []);
+        const lowStockResponse = await inventoryService.getLowStockItems();
+        setLowStockItems(lowStockResponse || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setError('Failed to load dashboard data. Please try again later.');

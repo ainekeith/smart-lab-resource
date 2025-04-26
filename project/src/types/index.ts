@@ -187,3 +187,48 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+export interface Report {
+  id: number;
+  title: string;
+  report_type: 'equipment_usage' | 'inventory_status' | 'maintenance' | 'booking_analytics';
+  description: string;
+  parameters: Record<string, any>;
+  file_url?: string;
+  created_at: string;
+  updated_at: string;
+  generated_by: number;
+  generated_by_name: string;
+}
+
+export interface ReportFilters {
+  report_type?: string;
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ReportMetrics {
+  total_bookings: number;
+  utilization_rate: number;
+  avg_duration: number;
+  maintenance_count: number;
+}
+
+export interface ReportTrend {
+  date: string;
+  bookings: number;
+  usage_hours: number;
+}
+
+export interface ReportDistribution {
+  name: string;
+  value: number;
+}
+
+export interface ReportData {
+  metrics: ReportMetrics;
+  trends: ReportTrend[];
+  distribution: ReportDistribution[];
+}
