@@ -19,9 +19,9 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.131']
 CORS_ALLOW_ALL_ORIGINS = False  # More secure in production
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://192.168.1.131:3000"
+    "http://localhost:5173",  # Vite default port
+    "http://127.0.0.1:5173",
+    "http://192.168.1.131:5173",
 ]
 CORS_ALLOW_METHODS = [
     'DELETE',
