@@ -24,7 +24,7 @@ import {
   Stack,
   useTheme,
 } from '@mui/material';
-import { Menu as MenuIcon, LogOut, User, Bell, Sun, Moon, LayoutDashboard, FlaskRound as Flask, Calendar, Package, FileText, Users, Settings } from 'lucide-react';
+import { Menu as MenuIcon, LogOut, User, Bell, Sun, Moon, LayoutDashboard, FlaskRound as Flask, Calendar, Package, FileText, Users, Settings, Building2 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { getAppTheme } from '../../utils/theme';
@@ -81,7 +81,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     dispatch(toggleTheme());
   };
   
-  const navItems = [
+  // Base navigation items
+  const baseNavItems = [
     { 
       text: 'Dashboard',
       icon: <LayoutDashboard size={22} />,
@@ -97,32 +98,51 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       icon: <Calendar size={22} />,
       path: '/bookings',
     },
+  ];
+  
+  // Admin and staff navigation items
+  const adminStaffNavItems = [
     { 
       text: 'Inventory',
       icon: <Package size={22} />,
       path: '/inventory',
+      roles: ['admin', 'staff'],
     },
     { 
       text: 'Reports',
       icon: <FileText size={22} />,
       path: '/reports',
+      roles: ['admin', 'staff'],
     },
   ];
   
-  // Only show Users menu for admin
-  if (user?.user_type === 'admin') {
-    navItems.push({
-      text: 'Users',
+  // Admin-only navigation items
+  const adminNavItems = [
+    {
+      text: 'Departments',
+      icon: <Building2 size={22} />,
+      path: '/admin/departments',
+      roles: ['admin'],
+    },
+    {
+      text: 'Role Management',
       icon: <Users size={22} />,
-      path: '/users',
-    });
-  }
+      path: '/admin/roles',
+      roles: ['admin'],
+    },
+  ];
   
-  navItems.push({
-    text: 'Settings',
-    icon: <Settings size={22} />,
-    path: '/settings',
-  });
+  // Filter navigation items based on user role
+  const navItems = [
+    ...baseNavItems,
+    ...(user?.user_type === 'admin' || user?.user_type === 'staff' ? adminStaffNavItems : []),
+    ...(user?.user_type === 'admin' ? adminNavItems : []),
+    {
+      text: 'Settings',
+      icon: <Settings size={22} />,
+      path: '/settings',
+    },
+  ];
   
   const drawer = (
     <>

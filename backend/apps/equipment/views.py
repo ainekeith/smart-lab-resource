@@ -7,6 +7,9 @@ from .serializers import EquipmentSerializer, MaintenanceRecordSerializer, Equip
 from apps.accounts.permissions import IsAdmin, IsStaff, IsOwnerOrStaff
 from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EquipmentFilter(django_filters.FilterSet):
     class Meta:
@@ -55,6 +58,13 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         records = equipment.maintenance_records.all().order_by('-maintenance_date')
         serializer = MaintenanceRecordSerializer(records, many=True)
         return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        logger.debug(f"User {request.user.username} requesting equipment list")
+        queryset = self.filter_queryset(self.get_queryset())
+        logger.debug(f"Found {queryset.count()} equipment items")
+        
+        return super().list(request, *args, **kwargs)
 
 class MaintenanceRecordViewSet(viewsets.ModelViewSet):
     queryset = MaintenanceRecord.objects.all()

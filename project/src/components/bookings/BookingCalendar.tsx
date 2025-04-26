@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
+  Typography,
+  Button,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Typography,
   useTheme,
   CircularProgress,
 } from '@mui/material';
@@ -83,7 +84,7 @@ const BookingCalendar = () => {
     return statusColors[status as keyof typeof statusColors] || theme.palette.primary.main;
   };
 
-  const events = bookings?.items?.map((booking: Booking) => ({
+  const events = bookings?.results?.map((booking: Booking) => ({
     id: booking.id,
     title: `${booking.equipment.name} - ${booking.user.first_name} ${booking.user.last_name}`,
     start: booking.start_time,
@@ -117,7 +118,7 @@ const BookingCalendar = () => {
             onChange={(e) => setSelectedEquipment(e.target.value)}
           >
             <MenuItem value="all">All Equipment</MenuItem>
-            {equipment?.items?.map((item: Equipment) => (
+            {equipment?.results?.map((item: Equipment) => (
               <MenuItem key={item.id} value={item.id}>
                 {item.name}
               </MenuItem>

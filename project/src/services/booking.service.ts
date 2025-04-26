@@ -17,8 +17,8 @@ class BookingService {
         throw new Error("Invalid date");
       }
       // Format date to match Django's expected format
-      return format(parsedDate, "yyyy-MM-dd HH:mm:ss");
-    } catch (error) {
+      return format(parsedDate, "yyyy-MM-dd'T'HH:mm:ss'Z'");
+    } catch {
       throw new Error("Invalid date format");
     }
   }
@@ -47,43 +47,52 @@ class BookingService {
       }
 
       return formattedParams;
-    } catch (error) {
+    } catch (err: unknown) {
       throw new Error(
-        "Error formatting parameters: " + (error as Error).message
+        "Error formatting parameters: " +
+          (err instanceof Error ? err.message : "Unknown error")
       );
     }
   }
 
   async getAll(filters?: BookingFilters): Promise<PaginatedResponse<Booking>> {
     try {
-      const params = {
-        ...filters,
-        start_date: filters?.start_date
-          ? this.formatDate(filters.start_date)
-          : undefined,
-        end_date: filters?.end_date
-          ? this.formatDate(filters.end_date)
-          : undefined,
-      };
-
+      const params = this.formatParams(filters);
+      console.log("[BookingService][GET] /bookings/ params:", params);
       const response = await api.get<PaginatedResponse<Booking>>("/bookings/", {
         params,
         paramsSerializer: {
           encode: (param: string) => param,
         },
       });
+      console.log("[BookingService][GET] /bookings/ response:", response.data);
+      if (!response.data.results && Array.isArray(response.data)) {
+        return {
+          count: response.data.length,
+          next: null,
+          previous: null,
+          results: response.data,
+        };
+      }
       return response.data;
-    } catch (error: any) {
-      console.error("Error fetching bookings:", error.response?.data || error);
-      throw error;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Invalid date")) {
+        throw new Error("Please provide valid dates for filtering bookings");
+      }
+      throw err;
     }
   }
 
   async getById(id: number): Promise<Booking> {
     try {
+      console.log(`[BookingService][GET] /bookings/${id}/`);
       const response = await api.get<Booking>(`/bookings/${id}/`);
+      console.log(
+        `[BookingService][GET] /bookings/${id}/ response:`,
+        response.data
+      );
       return response.data;
-    } catch (error) {
+    } catch {
       throw new Error("Failed to fetch booking details");
     }
   }
@@ -95,14 +104,15 @@ class BookingService {
         start_time: this.formatDate(bookingData.start_time),
         end_time: this.formatDate(bookingData.end_time),
       };
-
+      console.log("[BookingService][POST] /bookings/ payload:", formattedData);
       const response = await api.post<Booking>("/bookings/", formattedData);
+      console.log("[BookingService][POST] /bookings/ response:", response.data);
       return response.data;
-    } catch (error: any) {
-      if (error.message.includes("Invalid date")) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Invalid date")) {
         throw new Error("Please provide valid start and end times");
       }
-      throw error;
+      throw err;
     }
   }
 
@@ -120,45 +130,69 @@ class BookingService {
           ? this.formatDate(bookingData.end_time)
           : undefined,
       };
-
+      console.log(
+        `[BookingService][PUT] /bookings/${id}/ payload:`,
+        formattedData
+      );
       const response = await api.put<Booking>(
         `/bookings/${id}/`,
         formattedData
       );
+      console.log(
+        `[BookingService][PUT] /bookings/${id}/ response:`,
+        response.data
+      );
       return response.data;
-    } catch (error: any) {
-      if (error.message.includes("Invalid date")) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Invalid date")) {
         throw new Error("Please provide valid start and end times");
       }
-      throw error;
+      throw err;
     }
   }
 
   async approve(id: number): Promise<Booking> {
     try {
+      console.log(`[BookingService][POST] /bookings/${id}/approve/`);
       const response = await api.post<Booking>(`/bookings/${id}/approve/`);
+      console.log(
+        `[BookingService][POST] /bookings/${id}/approve/ response:`,
+        response.data
+      );
       return response.data;
-    } catch (error) {
+    } catch {
       throw new Error("Failed to approve booking");
     }
   }
 
   async reject(id: number, reason: string): Promise<Booking> {
     try {
+      console.log(`[BookingService][POST] /bookings/${id}/reject/ payload:`, {
+        reason,
+      });
       const response = await api.post<Booking>(`/bookings/${id}/reject/`, {
         reason,
       });
+      console.log(
+        `[BookingService][POST] /bookings/${id}/reject/ response:`,
+        response.data
+      );
       return response.data;
-    } catch (error) {
+    } catch {
       throw new Error("Failed to reject booking");
     }
   }
 
   async cancel(id: number): Promise<Booking> {
     try {
+      console.log(`[BookingService][POST] /bookings/${id}/cancel/`);
       const response = await api.post<Booking>(`/bookings/${id}/cancel/`);
+      console.log(
+        `[BookingService][POST] /bookings/${id}/cancel/ response:`,
+        response.data
+      );
       return response.data;
-    } catch (error) {
+    } catch {
       throw new Error("Failed to cancel booking");
     }
   }
@@ -169,16 +203,25 @@ class BookingService {
     endTime: string | Date
   ): Promise<boolean> {
     try {
+      const params = {
+        equipment_id: equipmentId,
+        start_time: this.formatDate(startTime),
+        end_time: this.formatDate(endTime),
+      };
+      console.log(
+        "[BookingService][GET] /bookings/check-availability/ params:",
+        params
+      );
       const response = await api.get("/bookings/check-availability/", {
-        params: {
-          equipment_id: equipmentId,
-          start_time: this.formatDate(startTime),
-          end_time: this.formatDate(endTime),
-        },
+        params,
       });
+      console.log(
+        "[BookingService][GET] /bookings/check-availability/ response:",
+        response.data
+      );
       return response.data.available;
-    } catch (error: any) {
-      if (error.message.includes("Invalid date")) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Invalid date")) {
         throw new Error("Please provide valid start and end times");
       }
       throw new Error("Failed to check availability");

@@ -4,7 +4,9 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  user_type: "student" | "staff" | "admin";
+  user_type: 'student' | 'staff' | 'admin';
+  department?: string;
+  phone_number?: string;
 }
 
 export interface AuthState {
@@ -34,7 +36,7 @@ export interface RegisterRequest {
   password2: string;
   first_name: string;
   last_name: string;
-  user_type: "student" | "staff";
+  user_type: 'student' | 'staff';
   department?: string;
   phone_number?: string;
 }
@@ -47,13 +49,8 @@ export interface Equipment {
   serial_number: string;
   category: string;
   location: string;
-  condition: "excellent" | "good" | "fair" | "poor" | "maintenance";
-  status:
-    | "available"
-    | "in_use"
-    | "reserved"
-    | "maintenance"
-    | "out_of_service";
+  condition: 'excellent' | 'good' | 'fair' | 'poor' | 'maintenance';
+  status: 'available' | 'in_use' | 'reserved' | 'maintenance' | 'out_of_service';
   image_url?: string;
   manual_url?: string;
   purchase_date?: string;
@@ -66,7 +63,7 @@ export interface Equipment {
 export interface MaintenanceRecord {
   id: number;
   equipment_id: number;
-  maintenance_type: "routine" | "repair" | "inspection" | "calibration";
+  maintenance_type: 'routine' | 'repair' | 'inspection' | 'calibration';
   description: string;
   maintenance_date: string;
   next_maintenance_date?: string;
@@ -82,7 +79,7 @@ export interface Booking {
   start_time: string;
   end_time: string;
   purpose: string;
-  status: "pending" | "approved" | "rejected" | "completed" | "cancelled";
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
   approved_by?: User;
   rejection_reason?: string;
   created_at: string;
@@ -106,13 +103,13 @@ export interface InventoryItem {
   location: string;
   price_per_unit: number;
   last_restocked: string;
-  stock_status: "in_stock" | "low_stock" | "out_of_stock";
+  stock_status: 'in_stock' | 'low_stock' | 'out_of_stock';
 }
 
 export interface StockMovement {
   id: number;
   item_id: number;
-  movement_type: "in" | "out" | "adjust";
+  movement_type: 'in' | 'out' | 'adjust';
   quantity: number;
   reference: string;
   notes?: string;
@@ -178,7 +175,7 @@ export interface UploadedFile {
 export interface BookingFilters {
   start_date?: string | Date;
   end_date?: string | Date;
-  status?: "pending" | "approved" | "rejected" | "cancelled";
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled';
   equipment_id?: number;
   page?: number;
   page_size?: number;

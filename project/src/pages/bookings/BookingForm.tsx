@@ -11,6 +11,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
   Alert,
   CircularProgress,
 } from '@mui/material';
@@ -44,7 +45,7 @@ const BookingForm = () => {
   const queryClient = useQueryClient();
   const [selectedEquipment, setSelectedEquipment] = useState<number | ''>('');
 
-  const { data: equipment, isLoading: isLoadingEquipment } = useQuery({
+  const { data: equipment, isLoading: isLoadingEquipment, error } = useQuery({
     queryKey: ['equipment'],
     queryFn: () => equipmentService.getAll({ status: 'available' }),
   });
@@ -87,12 +88,31 @@ const BookingForm = () => {
       formik.setFieldValue('equipment_id', Number(equipmentId));
       setSelectedEquipment(Number(equipmentId));
     }
+
+    const startTime = searchParams.get('start');
+    const endTime = searchParams.get('end');
+    if (startTime) {
+      formik.setFieldValue('start_time', new Date(startTime));
+    }
+    if (endTime) {
+      formik.setFieldValue('end_time', new Date(endTime));
+    }
   }, [searchParams]);
 
   if (isLoadingEquipment) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Error loading equipment. Please try again.
+        </Alert>
       </Box>
     );
   }
@@ -117,7 +137,10 @@ const BookingForm = () => {
           <form onSubmit={formik.handleSubmit}>
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <FormControl fullWidth error={formik.touched.equipment_id && Boolean(formik.errors.equipment_id)}>
+                <FormControl 
+                  fullWidth 
+                  error={formik.touched.equipment_id && Boolean(formik.errors.equipment_id)}
+                >
                   <InputLabel>Equipment</InputLabel>
                   <Select
                     name="equipment_id"
@@ -125,7 +148,7 @@ const BookingForm = () => {
                     onChange={formik.handleChange}
                     label="Equipment"
                   >
-                    {equipment?.items.map((item) => (
+                    {equipment?.results?.map((item) => (
                       <MenuItem key={item.id} value={item.id}>
                         {item.name}
                       </MenuItem>

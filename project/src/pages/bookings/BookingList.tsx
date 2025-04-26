@@ -22,6 +22,7 @@ import {
   CircularProgress,
   ToggleButtonGroup,
   ToggleButton,
+  Pagination,
 } from '@mui/material';
 import { Plus, Search, Eye, Calendar, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -61,6 +62,10 @@ const BookingList = () => {
     if (newView !== null) {
       setViewMode(newView);
     }
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setFilters(prev => ({ ...prev, page: value }));
   };
 
   if (error) {
@@ -139,7 +144,7 @@ const BookingList = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
             </Box>
-          ) : data?.items.length === 0 ? (
+          ) : !data?.results || data.results.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Calendar size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
               <Typography variant="h6" gutterBottom>
@@ -157,51 +162,64 @@ const BookingList = () => {
               </Button>
             </Box>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Equipment</TableCell>
-                    <TableCell>Start Time</TableCell>
-                    <TableCell>End Time</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>User</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data?.items.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell>{booking.equipment.name}</TableCell>
-                      <TableCell>
-                        {format(new Date(booking.start_time), 'MMM dd, yyyy HH:mm')}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(booking.end_time), 'MMM dd, yyyy HH:mm')}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={booking.status}
-                          size="small"
-                          color={statusColors[booking.status]}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {booking.user.first_name} {booking.user.last_name}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          onClick={() => navigate(`/bookings/${booking.id}`)}
-                          size="small"
-                        >
-                          <Eye size={20} />
-                        </IconButton>
-                      </TableCell>
+            <>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Equipment</TableCell>
+                      <TableCell>Start Time</TableCell>
+                      <TableCell>End Time</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>User</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {data.results.map((booking) => (
+                      <TableRow key={booking.id}>
+                        <TableCell>{booking.equipment.name}</TableCell>
+                        <TableCell>
+                          {format(new Date(booking.start_time), 'MMM dd, yyyy HH:mm')}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(booking.end_time), 'MMM dd, yyyy HH:mm')}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={booking.status}
+                            size="small"
+                            color={statusColors[booking.status]}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {booking.user.first_name} {booking.user.last_name}
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            onClick={() => navigate(`/bookings/${booking.id}`)}
+                            size="small"
+                          >
+                            <Eye size={20} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {data.count > filters.pageSize && (
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                  <Pagination
+                    count={Math.ceil(data.count / filters.pageSize)}
+                    page={filters.page}
+                    onChange={handlePageChange}
+                    color="primary"
+                  />
+                </Box>
+              )}
+            </>
           )}
         </Paper>
       )}

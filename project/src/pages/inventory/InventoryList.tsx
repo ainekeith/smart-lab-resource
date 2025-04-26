@@ -22,6 +22,7 @@ import {
   Stack,
   Alert,
   CircularProgress,
+  Pagination,
 } from '@mui/material';
 import {
   Plus,
@@ -60,6 +61,10 @@ const InventoryList = () => {
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value, page: 1 }));
+  };
+
+  const handlePageChange = (event: unknown, value: number) => {
+    setFilters(prev => ({ ...prev, page: value }));
   };
 
   if (error) {
@@ -152,7 +157,7 @@ const InventoryList = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
-      ) : data?.items.length === 0 ? (
+      ) : !data?.items || data.items.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" gutterBottom>
             No inventory items found
@@ -169,74 +174,87 @@ const InventoryList = () => {
           </Button>
         </Paper>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Item Name</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell align="right">Quantity</TableCell>
-                <TableCell align="right">Min. Quantity</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data?.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {item.name}
-                      {item.quantity <= item.minimum_quantity && (
-                        <AlertTriangle size={16} color="#ff9800" />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>{item.sku}</TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell align="right">
-                    {item.quantity} {item.unit}
-                  </TableCell>
-                  <TableCell align="right">
-                    {item.minimum_quantity} {item.unit}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={item.stock_status.replace('_', ' ')}
-                      size="small"
-                      color={stockStatusColors[item.stock_status] as any}
-                    />
-                  </TableCell>
-                  <TableCell>{item.location}</TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1} justifyContent="flex-end">
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/inventory/${item.id}`)}
-                      >
-                        <Eye size={18} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/inventory/${item.id}/edit`)}
-                      >
-                        <Edit size={18} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/inventory/${item.id}/movement`)}
-                      >
-                        <ArrowUpDown size={18} />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
+        <>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Item Name</TableCell>
+                  <TableCell>SKU</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell align="right">Quantity</TableCell>
+                  <TableCell align="right">Min. Quantity</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Location</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {data.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {item.name}
+                        {item.quantity <= item.minimum_quantity && (
+                          <AlertTriangle size={16} color="#ff9800" />
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>{item.sku}</TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell align="right">
+                      {item.quantity} {item.unit}
+                    </TableCell>
+                    <TableCell align="right">
+                      {item.minimum_quantity} {item.unit}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={item.stock_status.replace('_', ' ')}
+                        size="small"
+                        color={stockStatusColors[item.stock_status] as any}
+                      />
+                    </TableCell>
+                    <TableCell>{item.location}</TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/inventory/${item.id}`)}
+                        >
+                          <Eye size={18} />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/inventory/${item.id}/edit`)}
+                        >
+                          <Edit size={18} />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/inventory/${item.id}/movement`)}
+                        >
+                          <ArrowUpDown size={18} />
+                        </IconButton>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {data.total > filters.pageSize && (
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+              <Pagination
+                count={Math.ceil(data.total / filters.pageSize)}
+                page={filters.page}
+                onChange={handlePageChange}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );

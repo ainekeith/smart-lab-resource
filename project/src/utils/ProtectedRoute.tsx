@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
+import AccessDeniedDialog from '../components/common/AccessDeniedDialog';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -9,17 +10,22 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+  const location = useLocation();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   
   // Check if the user is authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
   // If a specific role is required, check the user's role
   if (requiredRole && user?.user_type !== requiredRole) {
-    // If user doesn't have the required role, redirect to dashboard
-    return <Navigate to="/dashboard" replace />;
+    return <AccessDeniedDialog 
+      open={true}
+      onClose={() => {}}
+      message={`This section requires ${requiredRole} access.`}
+      redirectPath="/dashboard"
+    />;
   }
   
   return <>{children}</>;

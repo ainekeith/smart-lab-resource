@@ -38,6 +38,7 @@ const StaffDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [maintenanceEquipment, setMaintenanceEquipment] = useState<Equipment[]>([]);
   const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
@@ -45,19 +46,23 @@ const StaffDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         // Fetch pending bookings
         const bookingsResponse = await bookingService.getAll({ status: 'pending' });
-        setPendingBookings(bookingsResponse.data);
+        setPendingBookings(bookingsResponse.results || []);
         
         // Fetch equipment under maintenance
         const equipmentResponse = await equipmentService.getAll({ status: 'maintenance' });
-        setMaintenanceEquipment(equipmentResponse.data);
+        setMaintenanceEquipment(equipmentResponse.items || []);
         
         // Fetch low stock inventory items
         const inventoryResponse = await inventoryService.getLowStockItems();
-        setLowStockItems(inventoryResponse);
+        setLowStockItems(inventoryResponse || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        setError('Failed to load dashboard data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -88,6 +93,14 @@ const StaffDashboard = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -143,7 +156,7 @@ const StaffDashboard = () => {
             icon={<BoxIcon size={24} />}
             description="Overall usage"
             color={theme.palette.success.main}
-            trend={5} // Example trend
+            trend={5}
           />
         </Grid>
       </Grid>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -43,6 +43,17 @@ const validationSchema = Yup.object({
     .oneOf([Yup.ref('new_password')], 'Passwords must match'),
 });
 
+interface ProfileFormValues {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  department: string;
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
 const Settings = () => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch<AppDispatch>();
@@ -57,7 +68,7 @@ const Settings = () => {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (values: any) => api.put('/users/profile/', values),
+    mutationFn: (values: Partial<ProfileFormValues>) => api.put('/users/profile/', values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       enqueueSnackbar('Profile updated successfully', { variant: 'success' });
@@ -68,23 +79,26 @@ const Settings = () => {
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: (values: any) => api.post('/users/change-password/', values),
+    mutationFn: (values: { current_password: string; new_password: string }) => 
+      api.post('/users/change-password/', values),
     onSuccess: () => {
       enqueueSnackbar('Password changed successfully', { variant: 'success' });
-      formik.resetForm();
+      formik.setFieldValue('current_password', '');
+      formik.setFieldValue('new_password', '');
+      formik.setFieldValue('confirm_password', '');
     },
     onError: (error: any) => {
       enqueueSnackbar(error.response?.data?.detail || 'Failed to change password', { variant: 'error' });
     },
   });
 
-  const formik = useFormik({
+  const formik = useFormik<ProfileFormValues>({
     initialValues: {
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      email: user?.email || '',
-      phone_number: user?.phone_number || '',
-      department: user?.department || '',
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone_number: '',
+      department: '',
       current_password: '',
       new_password: '',
       confirm_password: '',
@@ -108,6 +122,20 @@ const Settings = () => {
     },
   });
 
+  // Update form with user data when available
+  useEffect(() => {
+    if (user) {
+      formik.setValues({
+        ...formik.values,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        phone_number: user.phone_number || '',
+        department: user.department || '',
+      });
+    }
+  }, [user]);
+
   const handleThemeToggle = () => {
     dispatch(setTheme(themeMode === 'light' ? 'dark' : 'light'));
   };
@@ -118,6 +146,14 @@ const Settings = () => {
       [setting]: event.target.checked,
     }));
   };
+
+  if (!user) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">Unable to load user profile</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -145,7 +181,7 @@ const Settings = () => {
                         bgcolor: 'primary.main',
                       }}
                     >
-                      {user?.first_name?.[0] || user?.username?.[0]}
+                      {user.first_name?.[0] || user.username?.[0]}
                     </Avatar>
                     <IconButton
                       sx={{
@@ -289,7 +325,7 @@ const Settings = () => {
                       type="submit"
                       variant="contained"
                       color="primary"
-                      disabled={changePasswordMutation.isPending}
+                      disabled={changePasswordMutation.isPending || !formik.values.current_password}
                     >
                       Change Password
                     </Button>

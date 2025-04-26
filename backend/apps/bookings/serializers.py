@@ -5,6 +5,9 @@ from .models import Booking, LabSession
 from apps.accounts.serializers import UserSerializer
 from apps.equipment.serializers import EquipmentSerializer
 from apps.equipment.models import Equipment
+import logging
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -79,3 +82,100 @@ class LabSessionSerializer(serializers.ModelSerializer):
         model = LabSession
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
+
+from django.core.exceptions import ObjectDoesNotExist
+
+class BookingCreateSerializer(serializers.ModelSerializer):
+    equipment_id = serializers.PrimaryKeyRelatedField(
+        queryset=Equipment.objects.all(),
+        source='equipment'
+    )
+
+    class Meta:
+        model = Booking
+        fields = ['equipment_id', 'start_time', 'end_time', 'purpose']
+
+    def validate(self, data):
+        try:
+            # Get the equipment instance
+            equipment = data.get('equipment')
+            if not equipment:
+                raise serializers.ValidationError({
+                    'equipment_id': 'Equipment is required'
+                })
+
+            # Validate dates
+            start_time = data.get('start_time')
+            end_time = data.get('end_time')
+
+            if not start_time or not end_time:
+                raise serializers.ValidationError({
+                    'non_field_errors': 'Both start and end times are required'
+                })
+
+            # Convert to timezone-aware if they aren't already
+            if timezone.is_naive(start_time):
+                start_time = timezone.make_aware(start_time)
+            if timezone.is_naive(end_time):
+                end_time = timezone.make_aware(end_time)
+
+            # Validate time order
+            if start_time >= end_time:
+                raise serializers.ValidationError({
+                    'end_time': 'End time must be after start time'
+                })
+
+            # Check if booking is in the past
+            now = timezone.now()
+            if start_time < now:
+                raise serializers.ValidationError({
+                    'start_time': 'Cannot create bookings in the past'
+                })
+
+            # Check for overlapping bookings
+            overlapping = Booking.objects.filter(
+                equipment=equipment,
+                status='approved',
+                start_time__lt=end_time,
+                end_time__gt=start_time
+            ).exists()
+
+            if overlapping:
+                raise serializers.ValidationError({
+                    'non_field_errors': 'Equipment is already booked for this time period'
+                })
+
+            # Update the data with timezone-aware datetimes
+            data['start_time'] = start_time
+            data['end_time'] = end_time
+
+            return data
+
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Validation error: {str(e)}")
+            raise serializers.ValidationError('An error occurred during validation')
+
+class BookingDetailSerializer(serializers.ModelSerializer):
+    """Serializer for reading booking details - includes related data"""
+    user = UserSerializer(read_only=True)
+    equipment = EquipmentSerializer(read_only=True)
+    approved_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Booking
+        fields = [
+            'id',
+            'user',
+            'equipment',
+            'equipment_id',
+            'start_time',
+            'end_time',
+            'purpose',
+            'status',
+            'approved_by',
+            'rejection_reason',
+            'created_at'
+        ]

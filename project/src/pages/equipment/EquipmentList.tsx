@@ -3,8 +3,6 @@ import {
   Box,
   Grid,
   Typography,
-  Card,
-  CardContent,
   Button,
   TextField,
   InputAdornment,
@@ -15,6 +13,8 @@ import {
   Pagination,
   useTheme,
   useMediaQuery,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { Search, Plus, Filter, Grid as GridIcon, List as ListIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -23,10 +23,12 @@ import equipmentService from '../../services/equipment.service';
 import EquipmentCard from '../../components/equipment/EquipmentCard';
 import EquipmentListItem from '../../components/equipment/EquipmentListItem';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import { useAccess } from '../../hooks/useAccess';
 
 const EquipmentList = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { isAdmin, isStaff } = useAccess();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -58,7 +60,9 @@ const EquipmentList = () => {
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="error">Error loading equipment: {error.message}</Typography>
+        <Alert severity="error">
+          Error loading equipment. Please try again later.
+        </Alert>
       </Box>
     );
   }
@@ -69,13 +73,15 @@ const EquipmentList = () => {
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Equipment Management
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Plus size={20} />}
-          onClick={() => navigate('/equipment/new')}
-        >
-          Add Equipment
-        </Button>
+        {(isAdmin || isStaff) && (
+          <Button
+            variant="contained"
+            startIcon={<Plus size={20} />}
+            onClick={() => navigate('/equipment/new')}
+          >
+            Add Equipment
+          </Button>
+        )}
       </Box>
 
       <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -125,25 +131,27 @@ const EquipmentList = () => {
 
       {isLoading ? (
         <LoadingSkeleton viewMode={viewMode} count={12} />
-      ) : data?.items?.length === 0 ? (
+      ) : !data?.results || data.results.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6" gutterBottom>
             No equipment found
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 2 }}>
-            Start by adding new equipment
+            {isAdmin || isStaff ? 'Start by adding new equipment' : 'No equipment is available at the moment'}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={20} />}
-            onClick={() => navigate('/equipment/new')}
-          >
-            Add Equipment
-          </Button>
+          {(isAdmin || isStaff) && (
+            <Button
+              variant="contained"
+              startIcon={<Plus size={20} />}
+              onClick={() => navigate('/equipment/new')}
+            >
+              Add Equipment
+            </Button>
+          )}
         </Box>
       ) : viewMode === 'grid' ? (
         <Grid container spacing={3}>
-          {data?.items?.map((equipment) => (
+          {data.results.map((equipment) => (
             <Grid item xs={12} sm={6} md={4} key={equipment.id}>
               <EquipmentCard equipment={equipment} />
             </Grid>
@@ -151,16 +159,16 @@ const EquipmentList = () => {
         </Grid>
       ) : (
         <Box>
-          {data?.items?.map((equipment) => (
+          {data.results.map((equipment) => (
             <EquipmentListItem key={equipment.id} equipment={equipment} />
           ))}
         </Box>
       )}
 
-      {data?.items?.length > 0 && (
+      {data?.count > filters.pageSize && (
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
           <Pagination
-            count={Math.ceil((data?.total || 0) / filters.pageSize)}
+            count={Math.ceil(data.count / filters.pageSize)}
             page={filters.page}
             onChange={handlePageChange}
             color="primary"
