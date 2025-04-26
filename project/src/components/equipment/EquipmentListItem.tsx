@@ -7,11 +7,13 @@ import {
   Menu,
   MenuItem,
   Button,
+  Stack,
 } from '@mui/material';
 import { MoreVertical, Edit, Trash2, Calendar, PenTool as Tool } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Equipment } from '../../types';
+import { useAccess } from '../../hooks/useAccess';
 
 interface EquipmentListItemProps {
   equipment: Equipment;
@@ -26,9 +28,11 @@ const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> 
 
 const EquipmentListItem = ({ equipment }: EquipmentListItemProps) => {
   const navigate = useNavigate();
+  const { isAdmin, isStaff } = useAccess();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
@@ -54,6 +58,10 @@ const EquipmentListItem = ({ equipment }: EquipmentListItemProps) => {
     navigate(`/equipment/${equipment.id}/maintenance`);
   };
 
+  const handleViewDetails = () => {
+    navigate(`/equipment/${equipment.id}`);
+  };
+
   return (
     <Paper 
       sx={{ 
@@ -65,7 +73,9 @@ const EquipmentListItem = ({ equipment }: EquipmentListItemProps) => {
         '&:hover': {
           boxShadow: (theme) => theme.shadows[4],
         },
+        cursor: 'pointer',
       }}
+      onClick={handleViewDetails}
     >
       <Box
         component="img"
@@ -84,9 +94,14 @@ const EquipmentListItem = ({ equipment }: EquipmentListItemProps) => {
           <Typography variant="h6" component="h2">
             {equipment.name}
           </Typography>
-          <IconButton size="small" onClick={handleMenuOpen}>
-            <MoreVertical size={20} />
-          </IconButton>
+          {(isAdmin || isStaff) && (
+            <IconButton 
+              size="small" 
+              onClick={handleMenuOpen}
+            >
+              <MoreVertical size={20} />
+            </IconButton>
+          )}
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -110,28 +125,37 @@ const EquipmentListItem = ({ equipment }: EquipmentListItemProps) => {
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Stack direction="row" spacing={1}>
         <Button
           size="small"
           startIcon={<Calendar size={16} />}
-          onClick={handleBook}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleBook();
+          }}
           disabled={equipment.status !== 'available'}
         >
           Book
         </Button>
-        <Button
-          size="small"
-          startIcon={<Tool size={16} />}
-          onClick={handleMaintenance}
-        >
-          Maintenance
-        </Button>
-      </Box>
+        {(isAdmin || isStaff) && (
+          <Button
+            size="small"
+            startIcon={<Tool size={16} />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMaintenance();
+            }}
+          >
+            Maintenance
+          </Button>
+        )}
+      </Stack>
 
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        onClick={(e) => e.stopPropagation()}
       >
         <MenuItem onClick={handleEdit}>
           <Edit size={16} style={{ marginRight: 8 }} />

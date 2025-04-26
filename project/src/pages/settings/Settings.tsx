@@ -94,11 +94,11 @@ const Settings = () => {
 
   const formik = useFormik<ProfileFormValues>({
     initialValues: {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone_number: '',
-      department: '',
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      email: user?.email || '',
+      phone_number: user?.phone_number || '',
+      department: user?.department || '',
       current_password: '',
       new_password: '',
       confirm_password: '',
@@ -121,20 +121,6 @@ const Settings = () => {
       }
     },
   });
-
-  // Update form with user data when available
-  useEffect(() => {
-    if (user) {
-      formik.setValues({
-        ...formik.values,
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-        phone_number: user.phone_number || '',
-        department: user.department || '',
-      });
-    }
-  }, [user]);
 
   const handleThemeToggle = () => {
     dispatch(setTheme(themeMode === 'light' ? 'dark' : 'light'));

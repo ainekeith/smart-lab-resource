@@ -25,7 +25,7 @@ class EquipmentFilter(django_filters.FilterSet):
 class EquipmentViewSet(viewsets.ModelViewSet):
     queryset = Equipment.objects.all()
     serializer_class = EquipmentSerializer
-    permission_classes = [IsOwnerOrStaff]
+    permission_classes = [permissions.IsAuthenticated]  # Allow authenticated users to view
     filter_backends = [
         django_filters.DjangoFilterBackend,
         rest_filters.SearchFilter,
@@ -43,6 +43,12 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    def get_permissions(self):
+        """Set custom permissions for different actions"""
+        if self.action in ['update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsAdmin | IsStaff]
+        return super().get_permissions()
+
     @action(detail=True, methods=['post'])
     def add_maintenance(self, request, pk=None):
         equipment = self.get_object()
@@ -57,6 +63,14 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         equipment = self.get_object()
         records = equipment.maintenance_records.all().order_by('-maintenance_date')
         serializer = MaintenanceRecordSerializer(records, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def maintenance(self, request, pk=None):
+        """Get maintenance records for an equipment"""
+        equipment = self.get_object()
+        maintenance_records = MaintenanceRecord.objects.filter(equipment=equipment)
+        serializer = MaintenanceRecordSerializer(maintenance_records, many=True)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):

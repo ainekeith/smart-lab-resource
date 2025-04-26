@@ -15,6 +15,7 @@ import { MoreVertical, Edit, Trash2, Calendar, PenTool as Tool } from 'lucide-re
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Equipment } from '../../types';
+import { useAccess } from '../../hooks/useAccess';
 
 interface EquipmentCardProps {
   equipment: Equipment;
@@ -29,6 +30,7 @@ const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> 
 
 const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
   const navigate = useNavigate();
+  const { isAdmin, isStaff } = useAccess();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -57,6 +59,10 @@ const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
     navigate(`/equipment/${equipment.id}/maintenance`);
   };
 
+  const handleViewDetails = () => {
+    navigate(`/equipment/${equipment.id}`);
+  };
+
   return (
     <Card 
       sx={{ 
@@ -66,7 +72,9 @@ const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         '&:hover': {
           boxShadow: (theme) => theme.shadows[4],
         },
+        cursor: 'pointer',
       }}
+      onClick={handleViewDetails}
     >
       <CardMedia
         component="img"
@@ -79,9 +87,17 @@ const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
           <Typography variant="h6" component="h2" gutterBottom>
             {equipment.name}
           </Typography>
-          <IconButton size="small" onClick={handleMenuOpen}>
-            <MoreVertical size={20} />
-          </IconButton>
+          {(isAdmin || isStaff) && (
+            <IconButton 
+              size="small" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMenuOpen(e);
+              }}
+            >
+              <MoreVertical size={20} />
+            </IconButton>
+          )}
         </Box>
 
         <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -110,24 +126,33 @@ const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         <Button
           size="small"
           startIcon={<Calendar size={16} />}
-          onClick={handleBook}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleBook();
+          }}
           disabled={equipment.status !== 'available'}
         >
           Book
         </Button>
-        <Button
-          size="small"
-          startIcon={<Tool size={16} />}
-          onClick={handleMaintenance}
-        >
-          Maintenance
-        </Button>
+        {(isAdmin || isStaff) && (
+          <Button
+            size="small"
+            startIcon={<Tool size={16} />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMaintenance();
+            }}
+          >
+            Maintenance
+          </Button>
+        )}
       </CardActions>
 
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        onClick={(e) => e.stopPropagation()}
       >
         <MenuItem onClick={handleEdit}>
           <Edit size={16} style={{ marginRight: 8 }} />
