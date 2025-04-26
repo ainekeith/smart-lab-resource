@@ -1,192 +1,164 @@
 import React, { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
 import {
   Container,
   Box,
   Typography,
   TextField,
   Button,
-  Link,
   Paper,
+  Alert,
+  CircularProgress,
+  Grid,
+  Link,
   InputAdornment,
   IconButton,
-  Alert,
-  Fade,
-  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
-  Visibility,
-  VisibilityOff,
+  Person,
   Email,
   Lock,
-  Person,
+  Visibility,
+  VisibilityOff,
+  AccountCircle,
+  School,
 } from "@mui/icons-material";
-import { register } from "../../store/slices/authSlice";
-import { motion } from "framer-motion";
-import { validateEmail, validatePassword } from "../../utils/validation";
+import authService from "../../services/authService";
 
 const Register = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { error, loading } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    username: "",
     email: "",
-    password: "",
-    confirmPassword: "",
+    password1: "",
+    password2: "",
+    first_name: "",
+    last_name: "",
+    user_type: "student", // default to student
   });
 
-  const [validationErrors, setValidationErrors] = useState({});
-
-  const validateForm = () => {
-    const errors = {};
-
-    if (!formData.firstName.trim()) {
-      errors.firstName = "First name is required";
-    }
-
-    if (!formData.lastName.trim()) {
-      errors.lastName = "Last name is required";
-    }
-
-    if (!formData.email.trim()) {
-      errors.email = "Email is required";
-    } else if (!validateEmail(formData.email)) {
-      errors.email = "Invalid email format";
-    }
-
-    if (!formData.password) {
-      errors.password = "Password is required";
-    } else if (!validatePassword(formData.password)) {
-      errors.password =
-        "Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character";
-    }
-
-    if (!formData.confirmPassword) {
-      errors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      const { confirmPassword, ...registerData } = formData;
-      const result = await dispatch(register(registerData));
-      if (!result.error) {
-        navigate("/login", {
-          state: { message: "Registration successful! Please log in." },
-        });
-      }
+    setLoading(true);
+    setError("");
+
+    if (formData.password1 !== formData.password2) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await authService.register(formData);
+      navigate("/login", {
+        state: { message: "Registration successful! Please log in." },
+      });
+    } catch (error) {
+      setError(error.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleTogglePassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleToggleConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   return (
-    <Container component="main" maxWidth="sm">
+    <Container component="main" maxWidth="md">
       <Box
         sx={{
-          minHeight: "100vh",
+          marginTop: 4,
+          marginBottom: 4,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          gap: 4,
+          width: "100%",
         }}
       >
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Box
-            component="img"
-            src="/images/logos/logo.jpeg.jpg"
-            alt="Logo"
-            sx={{ width: 180, mb: 4 }}
-          />
-        </motion.div>
-
         <Paper
-          elevation={0}
+          elevation={3}
           sx={{
-            p: 4,
+            padding: { xs: 2, sm: 4, md: 6 },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             width: "100%",
-            borderRadius: 4,
+            maxWidth: "800px",
+            margin: "0 auto",
+            borderRadius: 2,
             bgcolor: "background.paper",
-            backdropFilter: "blur(20px)",
-            border: "1px solid",
-            borderColor: "divider",
           }}
         >
           <Typography
             component="h1"
             variant="h4"
-            align="center"
-            gutterBottom
-            sx={{ fontWeight: 700 }}
+            sx={{
+              mb: 1,
+              fontWeight: 600,
+              color: "primary.main",
+            }}
           >
             Create Account
           </Typography>
           <Typography
             variant="body1"
-            align="center"
-            color="text.secondary"
-            sx={{ mb: 4 }}
+            sx={{
+              mb: 3,
+              color: "text.secondary",
+              textAlign: "center",
+            }}
           >
             Join us to start managing lab resources
           </Typography>
 
           {error && (
-            <Fade in={true}>
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            </Fade>
+            <Alert severity="error" sx={{ mt: 2, width: "100%", mb: 2 }}>
+              {error}
+            </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
-                  id="firstName"
-                  label="First Name"
-                  name="firstName"
-                  autoComplete="given-name"
-                  value={formData.firstName}
+                  name="username"
+                  label="Username"
+                  autoComplete="username"
+                  value={formData.username}
                   onChange={handleChange}
-                  error={!!validationErrors.firstName}
-                  helperText={validationErrors.firstName}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Person color="action" />
+                        <AccountCircle color="action" />
                       </InputAdornment>
                     ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
                   }}
                 />
               </Grid>
@@ -194,20 +166,43 @@ const Register = () => {
                 <TextField
                   required
                   fullWidth
-                  id="lastName"
-                  label="Last Name"
-                  name="lastName"
-                  autoComplete="family-name"
-                  value={formData.lastName}
+                  name="first_name"
+                  label="First Name"
+                  value={formData.first_name}
                   onChange={handleChange}
-                  error={!!validationErrors.lastName}
-                  helperText={validationErrors.lastName}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
                         <Person color="action" />
                       </InputAdornment>
                     ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  name="last_name"
+                  label="Last Name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Person color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
                   }}
                 />
               </Grid>
@@ -215,14 +210,11 @@ const Register = () => {
                 <TextField
                   required
                   fullWidth
-                  id="email"
-                  label="Email Address"
                   name="email"
-                  autoComplete="email"
+                  label="Email Address"
+                  type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  error={!!validationErrors.email}
-                  helperText={validationErrors.email}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -230,21 +222,45 @@ const Register = () => {
                       </InputAdornment>
                     ),
                   }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel id="user-type-label">User Type</InputLabel>
+                  <Select
+                    labelId="user-type-label"
+                    id="user_type"
+                    name="user_type"
+                    value={formData.user_type}
+                    onChange={handleChange}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <School color="action" />
+                      </InputAdornment>
+                    }
+                    sx={{
+                      borderRadius: 1,
+                    }}
+                  >
+                    <MenuItem value="student">Student</MenuItem>
+                    <MenuItem value="staff">Staff</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
-                  name="password"
+                  name="password1"
                   label="Password"
                   type={showPassword ? "text" : "password"}
-                  id="password"
-                  autoComplete="new-password"
-                  value={formData.password}
+                  value={formData.password1}
                   onChange={handleChange}
-                  error={!!validationErrors.password}
-                  helperText={validationErrors.password}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -254,7 +270,8 @@ const Register = () => {
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label="toggle password visibility"
+                          onClick={handleTogglePassword}
                           edge="end"
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -262,20 +279,22 @@ const Register = () => {
                       </InputAdornment>
                     ),
                   }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
-                  name="confirmPassword"
+                  name="password2"
                   label="Confirm Password"
                   type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  value={formData.confirmPassword}
+                  value={formData.password2}
                   onChange={handleChange}
-                  error={!!validationErrors.confirmPassword}
-                  helperText={validationErrors.confirmPassword}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -285,9 +304,8 @@ const Register = () => {
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
+                          aria-label="toggle password visibility"
+                          onClick={handleToggleConfirmPassword}
                           edge="end"
                         >
                           {showConfirmPassword ? (
@@ -299,10 +317,14 @@ const Register = () => {
                       </InputAdornment>
                     ),
                   }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
               </Grid>
             </Grid>
-
             <Button
               type="submit"
               fullWidth
@@ -311,25 +333,30 @@ const Register = () => {
                 mt: 3,
                 mb: 2,
                 py: 1.5,
-                bgcolor: "primary.main",
-                color: "white",
+                borderRadius: 1,
+                fontSize: "1rem",
+                textTransform: "none",
+                boxShadow: "none",
                 "&:hover": {
-                  bgcolor: "primary.dark",
+                  boxShadow: "none",
                 },
               }}
               disabled={loading}
             >
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Create Account"
+              )}
             </Button>
-
-            <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Box sx={{ textAlign: "center" }}>
               <Link
                 component={RouterLink}
                 to="/login"
                 variant="body2"
                 sx={{
-                  color: "primary.main",
                   textDecoration: "none",
+                  color: "primary.main",
                   "&:hover": {
                     textDecoration: "underline",
                   },

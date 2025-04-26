@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Container,
   Box,
@@ -8,128 +8,145 @@ import {
   TextField,
   Button,
   Link,
+  Alert,
   Paper,
+  CircularProgress,
   InputAdornment,
   IconButton,
-  Alert,
-  Fade,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
-import { login } from "../../store/slices/authSlice";
-import { motion } from "framer-motion";
+import {
+  AccountCircle,
+  Lock,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
+import { login } from "../../redux/slices/authSlice";
+import authService from "../../services/authService";
 
 const Login = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { error, loading } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { loading, error, isAuthenticated } = useSelector(
+    (state) => state.auth
+  );
   const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState("");
 
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    // Clear any local errors when user starts typing
+    if (localError) setLocalError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(login(formData));
-    if (!result.error) {
-      navigate("/dashboard");
+    try {
+      const response = await authService.login(formData);
+      dispatch(login(response));
+    } catch (error) {
+      console.error("Login error:", error);
+      setLocalError(error.message || "Failed to login. Please try again.");
     }
   };
 
+  const handleTogglePassword = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="md">
       <Box
         sx={{
-          minHeight: "100vh",
+          marginTop: 4,
+          marginBottom: 4,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          gap: 4,
+          width: "100%",
         }}
       >
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Box
-            component="img"
-            src="/images/logos/logo.jpeg.jpg"
-            alt="Logo"
-            sx={{ width: 180, mb: 4 }}
-          />
-        </motion.div>
-
         <Paper
-          elevation={0}
+          elevation={3}
           sx={{
-            p: 4,
+            padding: { xs: 2, sm: 4, md: 6 },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             width: "100%",
-            borderRadius: 4,
+            maxWidth: "800px",
+            margin: "0 auto",
+            borderRadius: 2,
             bgcolor: "background.paper",
-            backdropFilter: "blur(20px)",
-            border: "1px solid",
-            borderColor: "divider",
           }}
         >
           <Typography
             component="h1"
             variant="h4"
-            align="center"
-            gutterBottom
-            sx={{ fontWeight: 700 }}
+            sx={{
+              mb: 1,
+              fontWeight: 600,
+              color: "primary.main",
+            }}
           >
-            Welcome Back
+            Sign in
           </Typography>
           <Typography
             variant="body1"
-            align="center"
-            color="text.secondary"
-            sx={{ mb: 4 }}
+            sx={{
+              mb: 3,
+              color: "text.secondary",
+              textAlign: "center",
+            }}
           >
-            Please sign in to continue
+            Welcome back to Smart Lab Resource
           </Typography>
 
-          {error && (
-            <Fade in={true}>
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            </Fade>
+          {(error || localError) && (
+            <Alert severity="error" sx={{ mt: 2, width: "100%", mb: 2 }}>
+              {error || localError}
+            </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
             <TextField
-              margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
               autoFocus
-              value={formData.email}
+              value={formData.username}
               onChange={handleChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Email color="action" />
+                    <AccountCircle color="action" />
                   </InputAdornment>
                 ),
               }}
+              sx={{
+                mb: 2,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1,
+                },
+              }}
             />
             <TextField
-              margin="normal"
               required
               fullWidth
               name="password"
@@ -148,7 +165,8 @@ const Login = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label="toggle password visibility"
+                      onClick={handleTogglePassword}
                       edge="end"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -156,8 +174,12 @@ const Login = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1,
+                },
+              }}
             />
-
             <Button
               type="submit"
               fullWidth
@@ -166,25 +188,30 @@ const Login = () => {
                 mt: 3,
                 mb: 2,
                 py: 1.5,
-                bgcolor: "primary.main",
-                color: "white",
+                borderRadius: 1,
+                fontSize: "1rem",
+                textTransform: "none",
+                boxShadow: "none",
                 "&:hover": {
-                  bgcolor: "primary.dark",
+                  boxShadow: "none",
                 },
               }}
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Sign In"
+              )}
             </Button>
-
-            <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Box sx={{ textAlign: "center" }}>
               <Link
                 component={RouterLink}
                 to="/register"
                 variant="body2"
                 sx={{
-                  color: "primary.main",
                   textDecoration: "none",
+                  color: "primary.main",
                   "&:hover": {
                     textDecoration: "underline",
                   },

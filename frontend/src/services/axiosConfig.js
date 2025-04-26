@@ -1,13 +1,18 @@
 import axios from "axios";
 import authService from "./authService";
 
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://192.168.1.131:8000/api";
+
 const axiosInstance = axios.create({
-  baseURL: "http://192.168.1.131:8000/api",
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
   withCredentials: true,
+  xsrfCookieName: "csrftoken",
+  xsrfHeaderName: "X-CSRFToken",
 });
 
 // Request interceptor
@@ -38,9 +43,16 @@ axiosInstance.interceptors.response.use(
         const user = authService.getCurrentUser();
         if (user?.refresh) {
           const response = await axios.post(
-            "http://192.168.1.131:8000/api/auth/token/refresh/",
+            `${API_URL}/auth/token/refresh/`,
             {
               refresh: user.refresh,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              withCredentials: true,
             }
           );
 
@@ -52,6 +64,7 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
         // If refresh token fails, logout the user
         authService.logout();
         window.location.href = "/login";
@@ -59,7 +72,15 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    // If the error has a response, return the error message from the server
+    if (error.response?.data) {
+      return Promise.reject(error.response.data);
+    }
+
+    // For network errors or other issues
+    return Promise.reject({
+      message: error.message || "An unexpected error occurred",
+    });
   }
 );
 
