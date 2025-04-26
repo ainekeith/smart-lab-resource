@@ -32,6 +32,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { withAccessControl } from '../common/withAccessControl';
 
 const mockUsageData = [
   { name: 'Jan', value: 42 },
@@ -259,4 +260,6 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default withAccessControl(AdminDashboard, {
+  requiredRoles: ['admin'],
+});

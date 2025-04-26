@@ -32,6 +32,7 @@ import equipmentService from '../../services/equipment.service';
 import inventoryService from '../../services/inventory.service';
 import { Booking, Equipment, InventoryItem } from '../../types';
 import { format } from 'date-fns';
+import { withAccessControl } from '../common/withAccessControl';
 
 const StaffDashboard = () => {
   const theme = useTheme();
@@ -321,4 +322,6 @@ const StaffDashboard = () => {
   );
 };
 
-export default StaffDashboard;
+export default withAccessControl(StaffDashboard, {
+  requiredRoles: ['staff'],
+});

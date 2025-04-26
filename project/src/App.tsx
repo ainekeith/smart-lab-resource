@@ -11,7 +11,18 @@ import Landing from './pages/Landing';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './pages/Dashboard';
-import Equipment from './pages/Equipment';
+import EquipmentList from './pages/equipment/EquipmentList';
+import EquipmentDetails from './pages/equipment/EquipmentDetails';
+import EquipmentForm from './pages/equipment/EquipmentForm';
+import BookingList from './pages/bookings/BookingList';
+import BookingForm from './pages/bookings/BookingForm';
+import BookingDetails from './pages/bookings/BookingDetails';
+import InventoryList from './pages/inventory/InventoryList';
+import StockMovement from './pages/inventory/StockMovement';
+import ReportDashboard from './pages/reports/ReportDashboard';
+import Settings from './pages/settings/Settings';
+import DepartmentList from './pages/admin/DepartmentList';
+import RoleManagement from './pages/admin/RoleManagement';
 import ProtectedRoute from './utils/ProtectedRoute';
 import { setCredentials } from './store/slices/authSlice';
 import authService from './services/auth.service';
@@ -74,7 +85,127 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MainLayout>
-                      <Equipment />
+                      <EquipmentList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/equipment/:id" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <EquipmentDetails />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/equipment/new" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <EquipmentForm />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/equipment/:id/edit" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <EquipmentForm />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bookings" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <BookingList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bookings/new" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <BookingForm />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bookings/:id" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <BookingDetails />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/inventory" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <InventoryList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/inventory/:id/movement" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <StockMovement />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/reports" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ReportDashboard />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Settings />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/departments" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <MainLayout>
+                      <DepartmentList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/roles" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <MainLayout>
+                      <RoleManagement />
                     </MainLayout>
                   </ProtectedRoute>
                 } 
